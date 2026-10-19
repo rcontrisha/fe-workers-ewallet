@@ -73,6 +73,53 @@ export const deleteHistory = createAsyncThunk(
   },
 );
 
+export const toggleFavorite = createAsyncThunk(
+  "history/toggleFavorite",
+  async (favoriteUserId, { getState, rejectWithValue }) => {
+    try {
+      const token = getState().auth.token;
+
+      if (!token) {
+        return rejectWithValue("Sesi login tidak ditemukan.");
+      }
+
+      const response = await fetch(`${getBaseUrl()}/favorite`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          favorite_user_id: favoriteUserId,
+        }),
+      });
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok || !result?.success) {
+        return rejectWithValue(
+          result?.message || "Gagal memperbarui favorite.",
+        );
+      }
+
+      const isFavorite = result?.data?.is_favorite;
+
+      if (typeof isFavorite !== "boolean") {
+        return rejectWithValue(
+          "Respons backend tidak memiliki status favorite.",
+        );
+      }
+
+      return {
+        favoriteUserId,
+        isFavorite,
+      };
+    } catch {
+      return rejectWithValue("Gagal terhubung ke server backend.");
+    }
+  },
+);
+
 const historySlice = createSlice({
   name: "history",
   initialState: {
@@ -81,6 +128,9 @@ const historySlice = createSlice({
     loading: false,
     deleting: false,
     error: null,
+    favoriteLoadingIds: [],
+    favoriteError: null,
+    favoriteStatusById: {},
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -111,6 +161,33 @@ const historySlice = createSlice({
       .addCase(deleteHistory.rejected, (state, action) => {
         state.deleting = false;
         state.error = action.payload || "Gagal menghapus riwayat transaksi";
+      })
+      .addCase(toggleFavorite.pending, (state, action) => {
+        const id = action.meta.arg;
+
+        if (!state.favoriteLoadingIds.includes(id)) {
+          state.favoriteLoadingIds.push(id);
+        }
+
+        state.favoriteError = null;
+      })
+      .addCase(toggleFavorite.fulfilled, (state, action) => {
+        const { favoriteUserId, isFavorite } = action.payload;
+
+        state.favoriteLoadingIds = state.favoriteLoadingIds.filter(
+          (id) => id !== favoriteUserId,
+        );
+
+        state.favoriteStatusById[favoriteUserId] = isFavorite;
+      })
+      .addCase(toggleFavorite.rejected, (state, action) => {
+        const id = action.meta.arg;
+
+        state.favoriteLoadingIds = state.favoriteLoadingIds.filter(
+          (item) => item !== id,
+        );
+
+        state.favoriteError = action.payload || "Gagal memperbarui favorite.";
       });
   },
 });

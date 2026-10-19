@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { FiSearch, FiStar, FiSend } from "react-icons/fi";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
+import { toggleFavorite } from "../../redux/slice/historySlice";
 
 function FindPeople({ onSelectContact }) {
   const { token } = useSelector((state) => state.auth);
@@ -8,7 +10,13 @@ function FindPeople({ onSelectContact }) {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [favorites, setFavorites] = useState([]);
+  const dispatch = useDispatch();
+  const favoriteLoadingIds = useSelector(
+    (state) => state.history.favoriteLoadingIds,
+  );
+  const favoriteStatusById = useSelector(
+    (state) => state.history.favoriteStatusById || {},
+  );
 
   useEffect(() => {
     const getContacts = async () => {
@@ -26,6 +34,7 @@ function FindPeople({ onSelectContact }) {
         const json = await res.json();
 
         if (!json.success) throw new Error(json.message);
+        console.log("DATA FAVORITE DARI BACKEND:", json.data);
         setContacts(json.data);
       } catch (err) {
         setError(err.message);
@@ -37,14 +46,29 @@ function FindPeople({ onSelectContact }) {
     getContacts();
   }, [search, token]);
 
-  const toggleFavorites = (id) => {
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
-    );
+  const handleToggleFavorite = async (contact) => {
+    if (!contact?.id || favoriteLoadingIds.includes(contact.id)) {
+      return;
+    }
+    try {
+      const result = await dispatch(toggleFavorite(contact.id)).unwrap();
+      toast.success(
+        result.isFavorite
+          ? "Berhasil menambahkan favorite."
+          : "Berhasil menghapus favorite.",
+      );
+    } catch (error) {
+      toast.error(
+        typeof error === "string" ? error : "Gagal memperbarui favorite.",
+      );
+    }
   };
 
-  const selectContact = (contact) => {
-    onSelectContact(contact);
+  const isContactFavorite = (contact) => {
+    if (favoriteStatusById[contact.id] !== undefined) {
+      return favoriteStatusById[contact.id];
+    }
+    return contact.is_favorite || contact.isFavorite || false;
   };
 
   return (
@@ -130,7 +154,7 @@ function FindPeople({ onSelectContact }) {
               >
                 <button
                   type="button"
-                  onClick={() => selectContact(contact)}
+                  onClick={() => onSelectContact(contact)}
                   className="flex min-w-0 flex-1 cursor-pointer items-center gap-4 text-left lg:grid lg:grid-cols-3 lg:gap-4"
                 >
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-sm font-semibold text-brand-primary lg:justify-self-center">
@@ -158,13 +182,19 @@ function FindPeople({ onSelectContact }) {
 
                 <button
                   type="button"
-                  onClick={() => toggleFavorites(contact.id)}
-                  className="ml-3 shrink-0 cursor-pointer p-2"
+                  disabled={favoriteLoadingIds.includes(contact.id)}
+                  onClick={() => handleToggleFavorite(contact)}
+                  aria-label={
+                    isContactFavorite(contact)
+                      ? "Remove from favorites"
+                      : "Add to favorites"
+                  }
+                  className="ml-3 shrink-0 cursor-pointer p-2 disabled:opacity-50"
                 >
                   <FiStar
                     size={20}
                     className={
-                      favorites.includes(contact.id)
+                      isContactFavorite(contact)
                         ? "fill-yellow-400 text-yellow-400"
                         : "text-gray-300"
                     }

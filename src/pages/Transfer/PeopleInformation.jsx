@@ -1,16 +1,11 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import { FiSend, FiStar, FiX } from "react-icons/fi";
 import { VscVerified } from "react-icons/vsc";
 import { CiMoneyCheck1 } from "react-icons/ci";
-import { useSelector } from "react-redux";
-
-// const navigation = [
-//   { name: "Dashboard", icon: FiGrid },
-//   { name: "Transfer", icon: FiSend },
-//   { name: "History", icon: FiClock },
-//   { name: "Top Up", icon: FiPlusCircle },
-//   { name: "Profile", icon: FiUser },
-// ];
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
+import { toggleFavorite } from "../../redux/slice/historySlice";
 
 function PeopleInformation({
   contact,
@@ -23,17 +18,24 @@ function PeopleInformation({
   onSendAgain,
   onBackDashboard,
 }) {
-  const [favorites, setFavorites] = useState([]);
   const [modalPin, setModalPin] = useState(false);
   const [pin, setPin] = useState("");
+  const [pinError, setPinError] = useState("");
   const [resultModal, setResultModal] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const { token } = useSelector((state) => state.auth);
 
   const handleConfirmPin = async () => {
+    if (pin.length !== 6) {
+      setPinError("Masukkan 6 digit PIN transaksi Anda.");
+      return;
+    }
+
     setSubmitting(true);
+    setPinError("");
     setErrorMsg("");
+
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/transfer`, {
         method: "POST",
@@ -45,29 +47,74 @@ function PeopleInformation({
           receiver_id: contact.id,
           amount: Number(amount),
           pin,
-          note: notes,
+          note: notes || "Transfer",
         }),
       });
-      const json = await res.json();
 
-      if (!json.success) throw new Error(json.message);
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok || !json?.success) {
+        throw new Error(json?.message || "Transfer gagal diproses.");
+      }
+
       onTransferSuccess(json.data);
+      setModalPin(false);
+      setPin("");
       setResultModal("success");
     } catch (err) {
-      setErrorMsg(err.message);
-      setResultModal("failed");
+      const message = err.message || "Terjadi kesalahan pada transaksi";
+      const isPinIssue =
+        message.toLowerCase().includes("pin") ||
+        message.toLowerCase().includes("invalid transaction pin");
+
+      if (isPinIssue) {
+        setPinError(message);
+        setPin("");
+      } else {
+        setErrorMsg(message);
+        setModalPin(false);
+        setPin("");
+        setResultModal("failed");
+      }
     } finally {
-      setPin("");
-      setModalPin(false);
       setSubmitting(false);
     }
   };
 
-  const toggleFavorites = (id) => {
-    if (favorites.includes(id)) {
-      setFavorites(favorites.filter((item) => item !== id));
-    } else {
-      setFavorites([...favorites, id]);
+  const dispatch = useDispatch();
+
+  const favoriteStatusById = useSelector(
+    (state) => state.history.favoriteStatusById || {},
+  );
+
+  const favoriteLoadingIds = useSelector(
+    (state) => state.history.favoriteLoadingIds || [],
+  );
+
+  const isContactFavorite = (targetContact) => {
+    if (!targetContact?.id) return false;
+    if (favoriteStatusById[targetContact.id] !== undefined) {
+      return favoriteStatusById[targetContact.id];
+    }
+
+    return Boolean(targetContact.is_favorite ?? targetContact.isFavorite);
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!contact?.id || favoriteLoadingIds.includes(contact.id)) {
+      return;
+    }
+    try {
+      const result = await dispatch(toggleFavorite(contact.id)).unwrap();
+      toast.success(
+        result.isFavorite
+          ? "Berhasil menambahkan favorite."
+          : "Berhasil menghapus favorite.",
+      );
+    } catch (error) {
+      toast.error(
+        typeof error === "string" ? error : "Gagal memperbarui favorite.",
+      );
     }
   };
 
@@ -159,13 +206,14 @@ function PeopleInformation({
 
               <button
                 type="button"
-                onClick={() => toggleFavorites(contact.id)}
-                className="cursor-pointer"
+                disabled={favoriteLoadingIds.includes(contact?.id)}
+                onClick={handleToggleFavorite}
+                className="cursor-pointer disabled:opacity-50"
               >
                 <FiStar
                   size={25}
                   className={
-                    favorites.includes(contact.id)
+                    isContactFavorite(contact)
                       ? "fill-yellow-400 text-yellow-400"
                       : "text-gray-400"
                   }
@@ -227,6 +275,8 @@ function PeopleInformation({
                 alert("Masukkan nominal transfer terlebih dahulu");
                 return;
               }
+              setPin("");
+              setPinError("");
               setModalPin(true);
             }}
             className="mt-4 h-11 w-full cursor-pointer rounded-xl bg-brand-primary text-white hover:opacity-90 lg:rounded-md"
@@ -235,20 +285,6 @@ function PeopleInformation({
           </button>
         </div>
       </main>
-
-      {/* <nav className="mt-auto grid shrink-0 grid-cols-5 border-t border-gray-100 bg-white px-2 py-3 lg:hidden">
-        {navigation.map(({ name, icon: Icon }) => (
-          <div
-            key={name}
-            className={`flex flex-col items-center justify-center gap-1 ${
-              name === "Transfer" ? "text-brand-primary" : "text-gray-400"
-            }`}
-          >
-            <Icon size={19} />
-            <span className="text-[10px]">{name}</span>
-          </div>
-        ))}
-      </nav> */}
 
       {/* Pin Modal */}
       {modalPin && (
@@ -263,6 +299,7 @@ function PeopleInformation({
                 onClick={() => {
                   setModalPin(false);
                   setPin("");
+                  setPinError("");
                 }}
                 className="cursor-pointer text-gray-500 hover:text-red-500"
               >
@@ -282,14 +319,14 @@ function PeopleInformation({
               {Array.from({ length: 6 }).map((_, index) => (
                 <div
                   key={index}
-                  className={`flex h-16 min-w-0 flex-1 items-center justify-center border-b-2 ${
+                  className={`flex h-16 min-w-0 flex-1 items-center justify-center border-b-2 transition-colors ${
                     pin.length === index
                       ? "border-brand-primary"
                       : "border-gray-200"
                   }`}
                 >
-                  <span className="text-3xl font-medium text-brand-secondary">
-                    {pin[index] || ""}
+                  <span className="text-2xl font-bold text-brand-secondary">
+                    {pin[index] ? "•" : ""}
                   </span>
                 </div>
               ))}
@@ -299,11 +336,21 @@ function PeopleInformation({
                 inputMode="numeric"
                 maxLength={6}
                 value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+                onChange={(e) => {
+                  setPinError("");
+                  setPin(e.target.value.replace(/\D/g, ""));
+                }}
                 placeholder="Enter 6 digit PIN"
                 className="absolute inset-0 h-full w-full cursor-text opacity-0"
+                autoFocus
               />
             </div>
+
+            {pinError && (
+              <p className="mt-3 text-center text-xs font-medium text-red-500">
+                {pinError}
+              </p>
+            )}
 
             <button
               type="button"
@@ -315,7 +362,13 @@ function PeopleInformation({
             </button>
 
             <p className="mt-4 text-center text-xs text-gray-400">
-              Forgot Your Pin? <span className="text-brand-primary">Reset</span>
+              Forgot Your Pin?{" "}
+              <Link
+                to="/profile"
+                className="font-medium text-brand-primary hover:underline"
+              >
+                Reset
+              </Link>
             </p>
           </div>
         </div>
@@ -374,6 +427,7 @@ function PeopleInformation({
                 } else {
                   setResultModal(null);
                   setPin("");
+                  setPinError("");
                   setModalPin(true);
                 }
               }}
