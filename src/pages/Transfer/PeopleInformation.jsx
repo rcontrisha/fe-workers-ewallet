@@ -325,7 +325,7 @@ function PeopleInformation({
                       : "border-gray-200"
                   }`}
                 >
-                  <span className="text-2xl font-bold text-brand-secondary">
+                  <span className="text-3xl font-medium text-brand-secondary">
                     {pin[index] ? "•" : ""}
                   </span>
                 </div>
