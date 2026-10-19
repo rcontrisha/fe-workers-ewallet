@@ -13,7 +13,7 @@ export const getProfile = createAsyncThunk(
       const response = await fetch(`${getBaseUrl()}/user/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await response.json().catch(() => null);
+      const data = await response.json();
 
       if (!response.ok) {
         return rejectWithValue(data?.message || "Gagal mengambil data profil");
@@ -36,7 +36,7 @@ export const updateProfile = createAsyncThunk(
         headers: { Authorization: `Bearer ${token}` },
         body: profileData,
       });
-      const data = await response.json().catch(() => null);
+      const data = await response.json();
 
       if (!response.ok) {
         return rejectWithValue(data?.message || "Gagal memperbarui profil");
@@ -58,7 +58,7 @@ export const deleteAvatar = createAsyncThunk(
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await response.json().catch(() => null);
+      const data = await response.json();
 
       if (!response.ok) {
         return rejectWithValue(data?.message || "Gagal menghapus avatar");
@@ -87,7 +87,7 @@ export const changePassword = createAsyncThunk(
           new_password: newPassword,
         }),
       });
-      const data = await response.json().catch(() => null);
+      const data = await response.json();
 
       if (!response.ok) {
         return rejectWithValue(data?.message || "Gagal mengubah password");
@@ -113,7 +113,7 @@ export const changePin = createAsyncThunk(
         },
         body: JSON.stringify({ pin }),
       });
-      const data = await response.json().catch(() => null);
+      const data = await response.json();
 
       if (!response.ok) {
         return rejectWithValue(data?.message || "Gagal mengubah PIN");
@@ -139,7 +139,7 @@ export const setPin = createAsyncThunk(
         },
         body: JSON.stringify({ pin }),
       });
-      const data = await response.json().catch(() => null);
+      const data = await response.json();
 
       if (!response.ok) {
         return rejectWithValue(data?.message || "Gagal menetapkan PIN");

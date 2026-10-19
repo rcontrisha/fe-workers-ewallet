@@ -17,7 +17,7 @@ export const registerUser = createAsyncThunk(
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json().catch(() => null);
+      const data = await response.json();
       if (!response.ok) {
         return rejectWithValue(
           data?.message || "Registrasi gagal, silakan periksa data Anda",
@@ -44,7 +44,7 @@ export const loginUser = createAsyncThunk(
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json().catch(() => null);
+      const data = await response.json();
 
       if (!response.ok) {
         return rejectWithValue(data?.message || "Email atau password salah");
@@ -79,7 +79,7 @@ export const logoutUser = createAsyncThunk(
         },
       });
 
-      const data = await response.json().catch(() => null);
+      const data = await response.json();
 
       if (!response.ok) {
         return rejectWithValue(data?.message || "Email atau password salah");
@@ -106,7 +106,7 @@ export const sendResetLink = createAsyncThunk(
         body: JSON.stringify({ email }),
       });
 
-      const data = await response.json().catch(() => null);
+      const data = await response.json();
 
       if (!response.ok) {
         return rejectWithValue(data?.message || "eror");
@@ -133,7 +133,7 @@ export const resetPassword = createAsyncThunk(
         body: JSON.stringify({ token, new_password: password }),
       });
 
-      const data = await response.json().catch(() => null);
+      const data = await response.json();
 
       if (!response.ok) {
         return rejectWithValue(data?.message || "Gagal memperbarui password");
@@ -171,8 +171,8 @@ const authSlice = createSlice({
       state.error = null;
     },
     successSetPin: (state) => {
-      state.user.has_pin = true
-    }
+      state.user.has_pin = true;
+    },
   },
   extraReducers: (builder) => {
     builder

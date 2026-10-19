@@ -20,7 +20,7 @@ export const fetchHistory = createAsyncThunk(
       const response = await fetch(`${getBaseUrl()}/history?${params}`, {
         headers,
       });
-      const result = await response.json().catch(() => null);
+      const result = await response.json();
 
       if (!response.ok || !result?.success) {
         return rejectWithValue(
@@ -57,7 +57,7 @@ export const deleteHistory = createAsyncThunk(
           headers: { Authorization: `Bearer ${token}` },
         },
       );
-      const result = await response.json().catch(() => null);
+      const result = await response.json();
 
       if (!response.ok || !result?.success) {
         return rejectWithValue(
@@ -94,7 +94,7 @@ export const toggleFavorite = createAsyncThunk(
         }),
       });
 
-      const result = await response.json().catch(() => null);
+      const result = await response.json();
 
       if (!response.ok || !result?.success) {
         return rejectWithValue(
