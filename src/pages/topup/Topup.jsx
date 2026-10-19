@@ -139,7 +139,7 @@ function Topup() {
                       onChange={() => setMethod(data.id)}
                     />
                     <img
-                      src={data.logo || "/bca.svg"}
+                      src={`${import.meta.env.VITE_API_URL}`/`${data.logo}`}
                       alt={data.name}
                       className="w-10 h-10 object-contain"
                     />

@@ -115,6 +115,9 @@ const Dashboard = () => {
   const income = dashboardSummary?.income ?? 0;
   const expense = dashboardSummary?.expense ?? 0;
 
+  const formatAmount = (amount) =>
+  `Rp${Math.abs(Number(amount) || 0).toLocaleString("id-ID")}`;
+
   // Data transaksi dari Backend
   const transactions = Array.isArray(dashboardHistory) ? dashboardHistory : [];
 
@@ -372,9 +375,7 @@ const Dashboard = () => {
                     const contactName =
                       item.name || "User";
                     const isExpense =
-                      item.transaction_type?.toLowerCase() === "send" ||
-                      item.transaction_type?.toLowerCase() === "transfer" ||
-                      item.type === "expense";
+                      item.type?.toLowerCase() === "transfer_out";
                     const amount = item.amount || item.original_amount || 0;
 
                     return (
@@ -386,7 +387,7 @@ const Dashboard = () => {
                           <Avatar
                             name={contactName}
                             isBank={
-                              item.transaction_type?.toLowerCase() === "topup"
+                              item.type?.toLowerCase() === "TOPUP"
                             }
                           />
                           <div className="flex flex-col">
@@ -403,8 +404,8 @@ const Dashboard = () => {
                             isExpense ? "text-rose-500" : "text-emerald-500"
                           }`}
                         >
-                          {isExpense ? "-" : "+"}Rp
-                          {Number(amount).toLocaleString("id-ID")}
+                          {isExpense ? "-" : "+"}
+                          {formatAmount(amount)}
                         </span>
                       </div>
                     );
