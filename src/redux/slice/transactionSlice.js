@@ -23,7 +23,7 @@ export const fetchTransactionStatus = createAsyncThunk(
         },
       );
 
-      const data = await response.json().catch(() => null);
+      const data = await response.json();
 
       if (!response.ok) {
         return rejectWithValue(
