@@ -154,31 +154,31 @@ export const setPin = createAsyncThunk(
 
 export const getDashboardSummary = createAsyncThunk(
   "user/getDashboardSummary",
-  async(_, {getState, rejectWithValue}) => {
-    try{
+  async (_, { getState, rejectWithValue }) => {
+    try {
       const token = getState().auth.token;
-      
+
       const response = await fetch(`${getBaseUrl()}/user/dashboard-summary`, {
         headers: {
-          Authorization:`Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
       const data = await response.json();
 
-      if(!response.ok){
+      if (!response.ok) {
         return rejectWithValue(
-          data?.message || "Gagal mengambil summary dashboard"
+          data?.message || "Gagal mengambil summary dashboard",
         );
       }
       return data?.data || data;
-    } catch(err){
+    } catch (err) {
       return rejectWithValue(
         err.message || "Gagal terhubung ke server backend",
-      )
+      );
     }
-  }
-)
+  },
+);
 
 export const getDashboardHistory = createAsyncThunk(
   "user/getDashboardHistory",
@@ -192,17 +192,17 @@ export const getDashboardHistory = createAsyncThunk(
 
       if (!response.ok) {
         return rejectWithValue(
-          data?.message || "Gagal mengambil riwayat transaksi dashboard"
+          data?.message || "Gagal mengambil riwayat transaksi dashboard",
         );
       }
 
       return data?.data || data;
     } catch (error) {
       return rejectWithValue(
-        error.message || "Gagal mengambil riwayat transaksi dashboard"
+        error.message || "Gagal mengambil riwayat transaksi dashboard",
       );
     }
-  }
+  },
 );
 
 const userSlice = createSlice({
@@ -320,7 +320,7 @@ const userSlice = createSlice({
         },
         rejected: (state) => {
           state.dashboardLoading = false;
-        }
+        },
       })
       .addAsyncThunk(getDashboardHistory, {
         pending: (state) => {
@@ -332,7 +332,7 @@ const userSlice = createSlice({
         },
         rejected: (state) => {
           state.dashboardLoading = false;
-        }
+        },
       });
   },
 });
