@@ -10,7 +10,7 @@ function TransferPage() {
   const [step, setStep] = useState("findPeople");
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
-  const [result, setResult] = useState(null); 
+  const [result, setResult] = useState(null);
 
   const handleSelectContact = (selected) => {
     setContact(selected);
