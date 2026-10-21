@@ -10,13 +10,26 @@ function TransferPage() {
   const [step, setStep] = useState("findPeople");
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
-  const [result, setResult] = useState(null); 
+  const [result, setResult] = useState(null);
 
   const handleSelectContact = (selected) => {
     setContact(selected);
     setStep("setNominal");
   };
 
+  // Navigasi prev back
+  const handlePrevToFindPeople = () => {
+    setStep("findPeople");
+  };
+
+  // Navigasi step 1 to step 2
+  const handleGoToSetNominal = () => {
+    if (contact) {
+      setStep("setNominal");
+    }
+  };
+
+  // Reset, transfer again
   const handleSendAgain = () => {
     setContact(null);
     setAmount("");
@@ -26,15 +39,17 @@ function TransferPage() {
   };
 
   const handleBackDashboard = () => navigate("/dashboard");
-
   const handleTransferSuccess = (data) => setResult(data);
-
   const handleFinishSuccess = () => setStep("finish");
 
   return (
     <>
       {step === "findPeople" && (
-        <FindPeople onSelectContact={handleSelectContact} />
+        <FindPeople
+          onSelectContact={handleSelectContact}
+          selectedContact={contact}
+          onGoToNominal={handleGoToSetNominal}
+        />
       )}
 
       {step === "setNominal" && (
@@ -48,6 +63,7 @@ function TransferPage() {
           onFinishSuccess={handleFinishSuccess}
           onSendAgain={handleSendAgain}
           onBackDashboard={handleBackDashboard}
+          onPrevStep={handlePrevToFindPeople}
         />
       )}
 

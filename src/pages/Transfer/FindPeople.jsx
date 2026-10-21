@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { toggleFavorite } from "../../redux/slice/historySlice";
 
-function FindPeople({ onSelectContact }) {
+function FindPeople({ onSelectContact, selectedContact, onGoToNominal }) {
   const { token } = useSelector((state) => state.auth);
   const [search, setSearch] = useState("");
   const [contacts, setContacts] = useState([]);
@@ -100,16 +100,32 @@ function FindPeople({ onSelectContact }) {
 
             <div className="w-16 border-t border-dashed border-gray-300" />
 
-            <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-500 text-white">
-                2
-              </span>
-              <span className="text-gray-500">Set Nominal</span>
-            </div>
+            {selectedContact && onGoToNominal ? (
+              <button
+                type="button"
+                onClick={onGoToNominal}
+                className="flex cursor-pointer items-center gap-2 transition-opacity hover:opacity-80"
+                title="Lanjut ke Set Nominal"
+              >
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-brand-primary font-medium">
+                  2
+                </span>
+                <span className="text-brand-primary font-medium hover:underline">
+                  Set Nominal
+                </span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 opacity-60">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-500 text-white">
+                  2
+                </span>
+                <span className="text-gray-500">Set Nominal</span>
+              </div>
+            )}
 
             <div className="w-16 border-t border-dashed border-gray-300" />
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 opacity-60">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-500 text-white">
                 3
               </span>
@@ -149,7 +165,11 @@ function FindPeople({ onSelectContact }) {
               <div
                 key={contact.id}
                 className={`flex items-center justify-between rounded-lg px-3 py-3 transition-colors hover:bg-brand-primary/5 lg:rounded-none lg:px-5 ${
-                  index % 2 === 0 ? "lg:bg-gray-50" : "bg-white"
+                  contact.id === selectedContact?.id
+                    ? "bg-blue-50/70 border border-brand-primary/30"
+                    : index % 2 === 0
+                    ? "lg:bg-gray-50"
+                    : "bg-white"
                 }`}
               >
                 <button
